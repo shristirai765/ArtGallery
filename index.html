@@ -1,161 +1,594 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monet’s Atelier · Home</title>
-  <!-- Fonts & Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
-  <!-- Shared style (home + gallery) -->
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    /* homepage specific overrides */
-    .hero {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 2.5rem;
-      background: linear-gradient(145deg, #e8ddd2, #d6c8bb);
-      border-radius: 60px 20px 60px 20px;
-      padding: 2.5rem 3rem;
-      margin: 2rem 0 3rem;
-      box-shadow: var(--shadow);
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monet's Atelier</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+    --monet-water:#b5d1d6;
+    --monet-lily:#7fa3a8;
+    --monet-gold:#c9a87c;
+    --monet-deep:#2c4b5a;
+    --bg:#f5efe9;
+    --shadow:0 12px 28px rgba(44,75,90,.12);
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Quicksand',sans-serif;
+}
+
+body{
+    background:var(--bg);
+    color:var(--monet-deep);
+}
+
+.container{
+    width:90%;
+    max-width:1400px;
+    margin:auto;
+}
+
+/* Header */
+
+header{
+    margin-top:20px;
+    background:linear-gradient(145deg,#e8ddd2,#d6c8bb);
+    padding:20px 35px;
+    border-radius:60px 20px 60px 20px;
+    box-shadow:var(--shadow);
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.logo{
+    font-size:2rem;
+    font-weight:700;
+}
+
+.logo i{
+    color:var(--monet-gold);
+}
+
+.nav-buttons{
+    display:flex;
+    gap:10px;
+}
+
+.nav-buttons a{
+    text-decoration:none;
+    background:var(--monet-deep);
+    color:white;
+    padding:12px 20px;
+    border-radius:40px;
+    font-weight:600;
+    transition:.3s;
+}
+
+.nav-buttons a:hover{
+    background:#1f3b47;
+}
+
+/* Hero */
+
+.hero{
+    margin:40px 0;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:40px;
+    align-items:center;
+
+    background:linear-gradient(145deg,#e8ddd2,#d6c8bb);
+    padding:60px;
+    border-radius:60px 20px 60px 20px;
+    box-shadow:var(--shadow);
+}
+
+.hero-text h1{
+    font-size:3.5rem;
+    margin-bottom:20px;
+}
+
+.hero-text p{
+    font-size:1.1rem;
+    line-height:1.8;
+    color:#617680;
+    margin-bottom:30px;
+}
+
+.hero-btn{
+    display:inline-block;
+    text-decoration:none;
+    background:var(--monet-deep);
+    color:white;
+    padding:15px 30px;
+    border-radius:50px;
+    font-weight:700;
+}
+
+.hero-icon{
+    text-align:center;
+}
+
+.hero-icon i{
+    font-size:10rem;
+    color:var(--monet-gold);
+}
+
+/* About Section */
+
+.section-title{
+    text-align:center;
+    margin-bottom:30px;
+    font-size:2rem;
+}
+
+.info-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:25px;
+}
+
+.info-card{
+    background:white;
+    padding:35px;
+    border-radius:40px 12px 40px 12px;
+    text-align:center;
+    box-shadow:var(--shadow);
+}
+
+.info-card i{
+    font-size:3rem;
+    color:var(--monet-lily);
+    margin-bottom:15px;
+}
+
+.info-card h3{
+    margin-bottom:10px;
+}
+
+/* Features */
+
+.features{
+    margin-top:50px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
+}
+
+.feature{
+    background:white;
+    padding:25px;
+    border-radius:25px;
+    text-align:center;
+    box-shadow:var(--shadow);
+}
+
+.feature i{
+    font-size:2.5rem;
+    color:var(--monet-gold);
+    margin-bottom:15px;
+}
+
+/* Footer */
+
+footer{
+    margin-top:50px;
+    text-align:center;
+    padding:25px;
+    border-top:1px solid #ddd;
+    color:#617680;
+}
+
+@media(max-width:768px){
+
+    .hero{
+        grid-template-columns:1fr;
+        text-align:center;
+        padding:35px;
     }
-    .hero-text {
-      flex: 1 1 280px;
+
+    .hero-text h1{
+        font-size:2.2rem;
     }
-    .hero-text h2 {
-      font-size: 2.8rem;
-      color: var(--monet-deep);
-      line-height: 1.2;
+
+    .hero-icon i{
+        font-size:6rem;
     }
-    .hero-text p {
-      font-size: 1.2rem;
-      color: #3a5a66;
-      margin: 0.8rem 0 1.5rem;
-      max-width: 500px;
+
+    header{
+        justify-content:center;
+        gap:15px;
     }
-    .hero-cta {
-      background: var(--monet-deep);
-      color: #f5efe9;
-      border: none;
-      padding: 0.9rem 2.5rem;
-      border-radius: 60px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.8rem;
-      text-decoration: none;
-      box-shadow: 0 6px 14px rgba(44, 75, 90, 0.25);
+
+    .nav-buttons{
+        flex-wrap:wrap;
+        justify-content:center;
     }
-    .hero-cta:hover {
-      background: #1f3b47;
-      transform: scale(1.02);
-    }
-    .hero-img {
-      flex: 1 1 260px;
-      display: flex;
-      justify-content: center;
-      font-size: 8rem;
-      color: var(--monet-gold);
-      opacity: 0.7;
-      text-shadow: 0 8px 18px rgba(44, 75, 90, 0.15);
-    }
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2rem;
-      margin: 3rem 0 2rem;
-    }
-    .feature-card {
-      background: rgba(255, 245, 235, 0.6);
-      backdrop-filter: blur(4px);
-      padding: 1.8rem 1.5rem;
-      border-radius: 40px 12px 40px 12px;
-      text-align: center;
-      border: 1px solid #ede0d4;
-      box-shadow: var(--shadow);
-      transition: 0.2s;
-    }
-    .feature-card:hover {
-      transform: translateY(-6px);
-    }
-    .feature-card i {
-      font-size: 2.8rem;
-      color: var(--monet-lily);
-      margin-bottom: 0.8rem;
-    }
-    .feature-card h3 {
-      color: var(--monet-deep);
-      margin-bottom: 0.3rem;
-    }
-    .feature-card p {
-      color: #4d6a75;
-      font-size: 0.95rem;
-    }
-    .home-footer {
-      text-align: center;
-      margin-top: 3rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid #ddd0c4;
-      color: #6b7f88;
-    }
-    @media (max-width: 700px) {
-      .hero { flex-direction: column; text-align: center; padding: 2rem; }
-      .hero-text p { max-width: 100%; }
-      .hero-img { font-size: 5rem; }
-    }
-  </style>
+}
+.featured-gallery{
+    margin-top:50px;
+}
+
+.gallery-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:25px;
+}
+
+.art-card{
+    background:white;
+    border-radius:25px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    transition:.3s;
+}
+
+.art-card:hover{
+    transform:translateY(-8px);
+}
+
+.art-card img{
+    width:100%;
+    height:250px;
+    object-fit:cover;
+}
+
+.art-content{
+    padding:20px;
+}
+
+.artist{
+    color:var(--monet-lily);
+    margin:10px 0;
+    font-weight:600;
+}
+
+.price{
+    color:var(--monet-gold);
+    font-weight:700;
+}
+</style>
 </head>
+
 <body>
-<div class="app">
-  <!-- Header (same as index) -->
-  <header class="header">
-    <h1><i class="fas fa-palette"></i> Monet’s Atelier</h1>
-    <a href="gallery.html" class="artist-cta" style="text-decoration: none;">
-      <i class="fas fa-arrow-right"></i> Enter Gallery
-    </a>
-  </header>
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-text">
-      <h2>Where art finds <br/>its voice.</h2>
-      <p>Discover, collect, and connect with artists. Every brushstroke tells a story — from Impressionism to the avant‑garde.</p>
-      <a href="gallery.html" class="hero-cta"><i class="fas fa-image"></i> Explore the collection</a>
-    </div>
-    <div class="hero-img">
-      <i class="fas fa-paint-brush"></i>
-    </div>
-  </section>
+<div class="container">
 
-  <!-- Features / why this platform -->
-  <div class="features">
-    <div class="feature-card">
-      <i class="fas fa-filter"></i>
-      <h3>Filter by medium &amp; genre</h3>
-      <p>Acrylic, oil, impressionism, abstract — find exactly what moves you.</p>
-    </div>
-    <div class="feature-card">
-      <i class="fas fa-plus-circle"></i>
-      <h3>Artist‑friendly</h3>
-      <p>Add your own paintings in seconds. Showcase your work to the world.</p>
-    </div>
-    <div class="feature-card">
-      <i class="fas fa-comment-dots"></i>
-      <h3>Talk &amp; sell</h3>
-      <p>Connect directly with collectors. Every piece is a conversation starter.</p>
-    </div>
-  </div>
+    <!-- HEADER -->
 
-  <!-- footer -->
-  <div class="home-footer">
-    <i class="fas fa-seedling"></i> inspired by Monet · art &amp; conversation
-  </div>
+    <header>
+
+        <div class="logo">
+            <i class="fas fa-palette"></i>
+            Monet's Atelier
+        </div>
+
+        <div class="nav-buttons">
+
+            <a href="gallery.php">
+                <i class="fas fa-images"></i>
+                Gallery
+            </a>
+
+            <a href="login.php">
+                <i class="fas fa-sign-in-alt"></i>
+                Login
+            </a>
+
+            <a href="register.php">
+                <i class="fas fa-user-plus"></i>
+                Register
+            </a>
+
+        </div>
+
+    </header>
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="hero-text">
+
+            <h1>
+                Where Art Finds Its Voice
+            </h1>
+
+            <p>
+                Discover unique artwork, connect with talented artists,
+                and explore a vibrant marketplace built for creativity,
+                inspiration, and artistic expression.
+            </p>
+
+            <a href="gallery.php" class="hero-btn">
+                <i class="fas fa-images"></i>
+                Explore Gallery
+            </a>
+
+        </div>
+
+        <div class="hero-icon">
+            <i class="fas fa-palette"></i>
+        </div>
+
+    </section>
+
+    <!-- FEATURED ARTWORKS -->
+
+    <section class="featured-gallery">
+
+        <h2 class="section-title">
+            Featured Artworks
+        </h2>
+
+        <div class="gallery-grid">
+
+            <div class="art-card">
+
+                <img src="images/art1.jpg">
+
+                <div class="art-content">
+
+                    <h3>Water Lilies</h3>
+
+                    <p class="artist">
+                        Claude Monet
+                    </p>
+
+                    <span class="price">
+                        Rs. 25,000
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="art-card">
+
+                <img src="images/art2.jpg">
+
+                <div class="art-content">
+
+                    <h3>Sunset Dreams</h3>
+
+                    <p class="artist">
+                        Sarah Johnson
+                    </p>
+
+                    <span class="price">
+                        Rs. 18,500
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="art-card">
+
+                <img src="images/art3.jpg">
+
+                <div class="art-content">
+
+                    <h3>Abstract Motion</h3>
+
+                    <p class="artist">
+                        David Lee
+                    </p>
+
+                    <span class="price">
+                        Rs. 32,000
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div style="text-align:center;margin-top:30px;">
+
+            <a href="gallery.php" class="hero-btn">
+                <i class="fas fa-images"></i>
+                View Full Gallery
+            </a>
+
+        </div>
+
+    </section>
+
+    <!-- WHY US -->
+
+    <section>
+
+        <h2 class="section-title">
+            Why Monet's Atelier?
+        </h2>
+
+        <div class="info-grid">
+
+            <div class="info-card">
+
+                <i class="fas fa-image"></i>
+
+                <h3>Discover Art</h3>
+
+                <p>
+                    Explore original paintings from talented artists.
+                </p>
+
+            </div>
+
+            <div class="info-card">
+
+                <i class="fas fa-paint-brush"></i>
+
+                <h3>Support Artists</h3>
+
+                <p>
+                    Help creators showcase and sell their artwork.
+                </p>
+
+            </div>
+
+            <div class="info-card">
+
+                <i class="fas fa-comments"></i>
+
+                <h3>Build Connections</h3>
+
+                <p>
+                    Connect artists and collectors worldwide.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- HOW IT WORKS -->
+
+    <section style="margin-top:60px;">
+
+        <h2 class="section-title">
+            How It Works
+        </h2>
+
+        <div class="info-grid">
+
+            <div class="info-card">
+
+                <i class="fas fa-user-plus"></i>
+
+                <h3>1. Create Account</h3>
+
+                <p>
+                    Register as a collector or artist.
+                </p>
+
+            </div>
+
+            <div class="info-card">
+
+                <i class="fas fa-upload"></i>
+
+                <h3>2. Share Artwork</h3>
+
+                <p>
+                    Artists upload and showcase their work.
+                </p>
+
+            </div>
+
+            <div class="info-card">
+
+                <i class="fas fa-shopping-cart"></i>
+
+                <h3>3. Buy & Connect</h3>
+
+                <p>
+                    Collectors browse and purchase artwork.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- FEATURES -->
+
+    <section class="features">
+
+        <div class="feature">
+
+            <i class="fas fa-store"></i>
+
+            <h3>Marketplace</h3>
+
+            <p>
+                Buy and sell original artwork securely.
+            </p>
+
+        </div>
+
+        <div class="feature">
+
+            <i class="fas fa-users"></i>
+
+            <h3>Community</h3>
+
+            <p>
+                Join a growing network of artists and collectors.
+            </p>
+
+        </div>
+
+        <div class="feature">
+
+            <i class="fas fa-star"></i>
+
+            <h3>Quality Art</h3>
+
+            <p>
+                Discover carefully curated artwork.
+            </p>
+
+        </div>
+
+    </section>
+
+    <!-- CTA -->
+
+    <section
+    style="
+    margin-top:60px;
+    text-align:center;
+    background:linear-gradient(145deg,#e8ddd2,#d6c8bb);
+    padding:60px;
+    border-radius:30px;
+    box-shadow:var(--shadow);
+    ">
+
+        <h2 style="margin-bottom:20px;">
+            Ready to Join the Art Community?
+        </h2>
+
+        <p style="margin-bottom:30px;">
+            Start your artistic journey today.
+        </p>
+
+        <a href="register.php" class="hero-btn">
+            Create Account
+        </a>
+
+    </section>
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        <i class="fas fa-seedling"></i>
+
+        Inspired by Monet • Art • Creativity • Community
+
+    </footer>
+
 </div>
+
 </body>
 </html>
+
