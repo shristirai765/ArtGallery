@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monet’s Atelier · Home</title>
+  <!-- Fonts & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet" />
+  <!-- Shared style (home + gallery) -->
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* homepage specific overrides */
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2.5rem;
+      background: linear-gradient(145deg, #e8ddd2, #d6c8bb);
+      border-radius: 60px 20px 60px 20px;
+      padding: 2.5rem 3rem;
+      margin: 2rem 0 3rem;
+      box-shadow: var(--shadow);
+    }
+    .hero-text {
+      flex: 1 1 280px;
+    }
+    .hero-text h2 {
+      font-size: 2.8rem;
+      color: var(--monet-deep);
+      line-height: 1.2;
+    }
+    .hero-text p {
+      font-size: 1.2rem;
+      color: #3a5a66;
+      margin: 0.8rem 0 1.5rem;
+      max-width: 500px;
+    }
+    .hero-cta {
+      background: var(--monet-deep);
+      color: #f5efe9;
+      border: none;
+      padding: 0.9rem 2.5rem;
+      border-radius: 60px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      text-decoration: none;
+      box-shadow: 0 6px 14px rgba(44, 75, 90, 0.25);
+    }
+    .hero-cta:hover {
+      background: #1f3b47;
+      transform: scale(1.02);
+    }
+    .hero-img {
+      flex: 1 1 260px;
+      display: flex;
+      justify-content: center;
+      font-size: 8rem;
+      color: var(--monet-gold);
+      opacity: 0.7;
+      text-shadow: 0 8px 18px rgba(44, 75, 90, 0.15);
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0 2rem;
+    }
+    .feature-card {
+      background: rgba(255, 245, 235, 0.6);
+      backdrop-filter: blur(4px);
+      padding: 1.8rem 1.5rem;
+      border-radius: 40px 12px 40px 12px;
+      text-align: center;
+      border: 1px solid #ede0d4;
+      box-shadow: var(--shadow);
+      transition: 0.2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+    }
+    .feature-card i {
+      font-size: 2.8rem;
+      color: var(--monet-lily);
+      margin-bottom: 0.8rem;
+    }
+    .feature-card h3 {
+      color: var(--monet-deep);
+      margin-bottom: 0.3rem;
+    }
+    .feature-card p {
+      color: #4d6a75;
+      font-size: 0.95rem;
+    }
+    .home-footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #ddd0c4;
+      color: #6b7f88;
+    }
+    @media (max-width: 700px) {
+      .hero { flex-direction: column; text-align: center; padding: 2rem; }
+      .hero-text p { max-width: 100%; }
+      .hero-img { font-size: 5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Header (same as index) -->
+  <header class="header">
+    <h1><i class="fas fa-palette"></i> Monet’s Atelier</h1>
+    <a href="gallery.html" class="artist-cta" style="text-decoration: none;">
+      <i class="fas fa-arrow-right"></i> Enter Gallery
+    </a>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-text">
+      <h2>Where art finds <br/>its voice.</h2>
+      <p>Discover, collect, and connect with artists. Every brushstroke tells a story — from Impressionism to the avant‑garde.</p>
+      <a href="gallery.html" class="hero-cta"><i class="fas fa-image"></i> Explore the collection</a>
+    </div>
+    <div class="hero-img">
+      <i class="fas fa-paint-brush"></i>
+    </div>
+  </section>
+
+  <!-- Features / why this platform -->
+  <div class="features">
+    <div class="feature-card">
+      <i class="fas fa-filter"></i>
+      <h3>Filter by medium &amp; genre</h3>
+      <p>Acrylic, oil, impressionism, abstract — find exactly what moves you.</p>
+    </div>
+    <div class="feature-card">
+      <i class="fas fa-plus-circle"></i>
+      <h3>Artist‑friendly</h3>
+      <p>Add your own paintings in seconds. Showcase your work to the world.</p>
+    </div>
+    <div class="feature-card">
+      <i class="fas fa-comment-dots"></i>
+      <h3>Talk &amp; sell</h3>
+      <p>Connect directly with collectors. Every piece is a conversation starter.</p>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div class="home-footer">
+    <i class="fas fa-seedling"></i> inspired by Monet · art &amp; conversation
+  </div>
+</div>
+</body>
+</html>
