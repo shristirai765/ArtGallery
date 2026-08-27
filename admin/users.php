@@ -10,16 +10,45 @@ include '../config/db.php';
 
 // Handle delete user
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
+
     $userId = (int)$_GET['delete'];
-    
+
     // Prevent admin from deleting themselves
     if ($userId != $_SESSION['id']) {
-        $conn->query("DELETE FROM users WHERE id = '$userId'");
+
+        // Delete related messages
+        $conn->query("
+            DELETE FROM messages
+            WHERE sender_id = '$userId'
+               OR receiver_id = '$userId'
+        ");
+
+        // Delete cart items
+        $conn->query("
+            DELETE FROM cart
+            WHERE user_id = '$userId'
+        ");
+
+        // Delete orders
+        $conn->query("
+            DELETE FROM orders
+            WHERE user_id = '$userId'
+        ");
+
+        // Finally delete the user
+        $conn->query("
+            DELETE FROM users
+            WHERE id = '$userId'
+        ");
+
         header("Location: users.php?deleted=1");
         exit();
+
     } else {
+
         header("Location: users.php?error=1");
         exit();
+
     }
 }
 
