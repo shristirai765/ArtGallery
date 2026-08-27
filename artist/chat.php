@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Check if user is logged in - redirect to login if not
 if (!isset($_SESSION['id'])) {
     header("Location: ../login.php");
     exit();
@@ -11,6 +12,18 @@ if (!isset($_SESSION['id'])) {
 include "../config/db.php";
 
 $loggedUser = (int)$_SESSION['id'];
+
+// Check if the user is an artist - redirect to customer chat if not
+if ($_SESSION['role'] != 'artist') {
+    // If the user is a customer, redirect to customer chat
+    if ($_SESSION['role'] == 'user') {
+        header("Location: ../customer/chat.php?user=" . (isset($_GET['user']) ? $_GET['user'] : ''));
+        exit();
+    } else {
+        header("Location: ../login.php");
+        exit();
+    }
+}
 
 // Update user's last activity directly in this file
 $update = $conn->prepare("UPDATE users SET last_activity = NOW() WHERE id = ?");
@@ -81,9 +94,7 @@ if (isset($_POST['send'])) {
     }
 }
 
-// -------------------------
-// Navigation Counts - Only what artists need
-// -------------------------
+// Navigation counts - kept for reference but badges removed
 $orderCount = $conn->query("SELECT COUNT(*) total FROM orders WHERE artist_id = $loggedUser")->fetch_assoc()['total'];
 $messageCount = $conn->query("
     SELECT COUNT(*) total 
@@ -171,19 +182,9 @@ $artworkCount = $conn->query("SELECT COUNT(*) total FROM artworks WHERE artist_i
             color: white;
         }
         
+        /* Badges completely hidden */
         .badge {
-            background: #e74c3c;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            min-width: 18px;
-            text-align: center;
-        }
-        
-        .badge.hidden {
-            display: none;
+            display: none !important;
         }
         
         .logout {
@@ -566,25 +567,19 @@ $artworkCount = $conn->query("SELECT COUNT(*) total FROM artworks WHERE artist_i
                     <i class="fas fa-home"></i> Dashboard
                 </a>
                 <a href="orders.php">
-                    <i class="fas fa-box"></i> Orders 
-                    <span class="badge <?php echo $orderCount == 0 ? 'hidden' : ''; ?>">
-                        <?php echo $orderCount; ?>
-                    </span>
+                    <i class="fas fa-box"></i> Orders
                 </a>
                 <a href="messages.php" class="active">
-                    <i class="fas fa-envelope"></i> Messages 
-                    <span class="badge <?php echo $messageCount == 0 ? 'hidden' : ''; ?>">
-                        <?php echo $messageCount; ?>
-                    </span>
+                    <i class="fas fa-envelope"></i> Messages
                 </a>
                 <a href="artworks.php">
                     <i class="fas fa-paint-brush"></i> My Artworks
-                    <span class="badge <?php echo $artworkCount == 0 ? 'hidden' : ''; ?>">
-                        <?php echo $artworkCount; ?>
-                    </span>
                 </a>
                 <a href="add_artwork.php">
                     <i class="fas fa-plus-circle"></i> Add Artwork
+                </a>
+                <a href="profile.php">
+                    <i class="fas fa-user-circle"></i> Profile
                 </a>
                 <a href="../logout.php" class="logout">
                     <i class="fas fa-sign-out-alt"></i> Logout

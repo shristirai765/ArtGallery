@@ -13,6 +13,18 @@ if(isset($_POST['login']))
          WHERE email='$email'
          AND role='$role'"
     );
+    // Add this for debugging (remove after)
+// if($result && $result->num_rows > 0) {
+//     $user = $result->fetch_assoc();
+    
+//     // Debug output
+//     echo "User found!<br>";
+//     echo "Email: " . $user['email'] . "<br>";
+//     echo "Role: " . $user['role'] . "<br>";
+//     echo "Stored hash: " . $user['password'] . "<br>";
+//     echo "Password verify: " . (password_verify($password, $user['password']) ? 'true' : 'false') . "<br>";
+//     exit();
+// }
 
     if($result && $result->num_rows > 0)
     {

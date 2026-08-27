@@ -1,0 +1,73 @@
+Array
+(
+    [timestamp] => 2026-07-04 13:03:54
+    [GET] => Array
+        (
+            [data] => eyJ0cmFuc2FjdGlvbl9jb2RlIjoiMDAwRzFNNyIsInN0YXR1cyI6IkNPTVBMRVRFIiwidG90YWxfYW1vdW50IjoiMTAwMC4wIiwidHJhbnNhY3Rpb25fdXVpZCI6IjIwMjYwNzA0MTMwMjAzX2U1MTM2NTFmNjMxNTdiYjJfMjIiLCJwcm9kdWN0X2NvZGUiOiJFUEFZVEVTVCIsInNpZ25lZF9maWVsZF9uYW1lcyI6InRyYW5zYWN0aW9uX2NvZGUsc3RhdHVzLHRvdGFsX2Ftb3VudCx0cmFuc2FjdGlvbl91dWlkLHByb2R1Y3RfY29kZSxzaWduZWRfZmllbGRfbmFtZXMiLCJzaWduYXR1cmUiOiJiMVNzMS9LWFkxYmN1Q0VaOEx6N1N6ODc4VWJHWTNjVDF3OVQ2STQ0Q2YwPSJ9
+        )
+
+    [POST] => Array
+        (
+        )
+
+    [REQUEST] => Array
+        (
+            [data] => eyJ0cmFuc2FjdGlvbl9jb2RlIjoiMDAwRzFNNyIsInN0YXR1cyI6IkNPTVBMRVRFIiwidG90YWxfYW1vdW50IjoiMTAwMC4wIiwidHJhbnNhY3Rpb25fdXVpZCI6IjIwMjYwNzA0MTMwMjAzX2U1MTM2NTFmNjMxNTdiYjJfMjIiLCJwcm9kdWN0X2NvZGUiOiJFUEFZVEVTVCIsInNpZ25lZF9maWVsZF9uYW1lcyI6InRyYW5zYWN0aW9uX2NvZGUsc3RhdHVzLHRvdGFsX2Ftb3VudCx0cmFuc2FjdGlvbl91dWlkLHByb2R1Y3RfY29kZSxzaWduZWRfZmllbGRfbmFtZXMiLCJzaWduYXR1cmUiOiJiMVNzMS9LWFkxYmN1Q0VaOEx6N1N6ODc4VWJHWTNjVDF3OVQ2STQ0Q2YwPSJ9
+        )
+
+    [SERVER] => Array
+        (
+            [MIBDIRS] => C:/xampp/php/extras/mibs
+            [MYSQL_HOME] => \xampp\mysql\bin
+            [OPENSSL_CONF] => C:/xampp/apache/bin/openssl.cnf
+            [PHP_PEAR_SYSCONF_DIR] => \xampp\php
+            [PHPRC] => \xampp\php
+            [TMP] => \xampp\tmp
+            [HTTP_HOST] => 127.0.0.1
+            [HTTP_CONNECTION] => keep-alive
+            [HTTP_SEC_CH_UA] => "Not;A=Brand";v="8", "Chromium";v="150", "Brave";v="150"
+            [HTTP_SEC_CH_UA_MOBILE] => ?0
+            [HTTP_SEC_CH_UA_PLATFORM] => "Windows"
+            [HTTP_UPGRADE_INSECURE_REQUESTS] => 1
+            [HTTP_USER_AGENT] => Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36
+            [HTTP_ACCEPT] => text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8
+            [HTTP_SEC_GPC] => 1
+            [HTTP_ACCEPT_LANGUAGE] => en-US,en;q=0.7
+            [HTTP_SEC_FETCH_SITE] => cross-site
+            [HTTP_SEC_FETCH_MODE] => navigate
+            [HTTP_SEC_FETCH_USER] => ?1
+            [HTTP_SEC_FETCH_DEST] => document
+            [HTTP_ACCEPT_ENCODING] => gzip, deflate, br, zstd
+            [PATH] => C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\dotnet\;C:\Program Files\Git\cmd;C:\Program Files\nodejs\;C:\Program Files\Microsoft SQL Server\170\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\Program Files (x86)\Microsoft SQL Server\160\DTS\Binn\;C:\Program Files (x86)\Microsoft SQL Server\170\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\180\Tools\Binn\;C:\Program Files\Microsoft SQL Server\170\DTS\Binn\;C:\Users\acer\AppData\Local\Microsoft\WindowsApps;C:\Users\acer\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\acer\.dotnet\tools;C:\Users\acer\AppData\Roaming\npm;C:\Users\acer\AppData\Local\Programs\mongosh\
+            [SystemRoot] => C:\Windows
+            [COMSPEC] => C:\Windows\system32\cmd.exe
+            [PATHEXT] => .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC
+            [WINDIR] => C:\Windows
+            [SERVER_SIGNATURE] => <address>Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12 Server at 127.0.0.1 Port 80</address>
+
+            [SERVER_SOFTWARE] => Apache/2.4.58 (Win64) OpenSSL/3.1.3 PHP/8.2.12
+            [SERVER_NAME] => 127.0.0.1
+            [SERVER_ADDR] => 127.0.0.1
+            [SERVER_PORT] => 80
+            [REMOTE_ADDR] => 127.0.0.1
+            [DOCUMENT_ROOT] => C:/xampp/htdocs
+            [REQUEST_SCHEME] => http
+            [CONTEXT_PREFIX] => 
+            [CONTEXT_DOCUMENT_ROOT] => C:/xampp/htdocs
+            [SERVER_ADMIN] => postmaster@localhost
+            [SCRIPT_FILENAME] => C:/xampp/htdocs/MonetArtGallery/customer/esewa_callback.php
+            [REMOTE_PORT] => 53422
+            [GATEWAY_INTERFACE] => CGI/1.1
+            [SERVER_PROTOCOL] => HTTP/1.1
+            [REQUEST_METHOD] => GET
+            [QUERY_STRING] => data=eyJ0cmFuc2FjdGlvbl9jb2RlIjoiMDAwRzFNNyIsInN0YXR1cyI6IkNPTVBMRVRFIiwidG90YWxfYW1vdW50IjoiMTAwMC4wIiwidHJhbnNhY3Rpb25fdXVpZCI6IjIwMjYwNzA0MTMwMjAzX2U1MTM2NTFmNjMxNTdiYjJfMjIiLCJwcm9kdWN0X2NvZGUiOiJFUEFZVEVTVCIsInNpZ25lZF9maWVsZF9uYW1lcyI6InRyYW5zYWN0aW9uX2NvZGUsc3RhdHVzLHRvdGFsX2Ftb3VudCx0cmFuc2FjdGlvbl91dWlkLHByb2R1Y3RfY29kZSxzaWduZWRfZmllbGRfbmFtZXMiLCJzaWduYXR1cmUiOiJiMVNzMS9LWFkxYmN1Q0VaOEx6N1N6ODc4VWJHWTNjVDF3OVQ2STQ0Q2YwPSJ9
+            [REQUEST_URI] => /MonetArtGallery/customer/esewa_callback.php?data=eyJ0cmFuc2FjdGlvbl9jb2RlIjoiMDAwRzFNNyIsInN0YXR1cyI6IkNPTVBMRVRFIiwidG90YWxfYW1vdW50IjoiMTAwMC4wIiwidHJhbnNhY3Rpb25fdXVpZCI6IjIwMjYwNzA0MTMwMjAzX2U1MTM2NTFmNjMxNTdiYjJfMjIiLCJwcm9kdWN0X2NvZGUiOiJFUEFZVEVTVCIsInNpZ25lZF9maWVsZF9uYW1lcyI6InRyYW5zYWN0aW9uX2NvZGUsc3RhdHVzLHRvdGFsX2Ftb3VudCx0cmFuc2FjdGlvbl91dWlkLHByb2R1Y3RfY29kZSxzaWduZWRfZmllbGRfbmFtZXMiLCJzaWduYXR1cmUiOiJiMVNzMS9LWFkxYmN1Q0VaOEx6N1N6ODc4VWJHWTNjVDF3OVQ2STQ0Q2YwPSJ9
+            [SCRIPT_NAME] => /MonetArtGallery/customer/esewa_callback.php
+            [PHP_SELF] => /MonetArtGallery/customer/esewa_callback.php
+            [REQUEST_TIME_FLOAT] => 1783163034.1359
+            [REQUEST_TIME] => 1783163034
+        )
+
+)
+
+

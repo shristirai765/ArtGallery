@@ -17,7 +17,11 @@ if (!isset($_GET['artist'])) {
 
 $artist = (int)$_GET['artist'];
 
-// Get artist info with profile image
+
+// ------------------------------------
+// GET ARTIST INFORMATION
+// ------------------------------------
+
 $artistInfo = $conn->query("
     SELECT username, profile_image, last_activity
     FROM users
@@ -31,44 +35,119 @@ if (!$artistInfo) {
 $artistName = $artistInfo['username'];
 $artistProfileImage = $artistInfo['profile_image'] ?? null;
 
-// Check if artist is online (within last 5 minutes)
+
+// ------------------------------------
+// CHECK ARTIST ONLINE STATUS
+// ------------------------------------
+
 $lastActivity = strtotime($artistInfo['last_activity'] ?? '');
 $currentTime = time();
+
 $isOnline = ($lastActivity && ($currentTime - $lastActivity) < (5 * 60));
 
-$artwork = isset($_GET['art']) ? (int)$_GET['art'] : 0;
 
-// Get logged user info with profile image
+// ------------------------------------
+// GET LOGGED-IN USER INFORMATION
+// ------------------------------------
+
 $userInfo = $conn->query("
     SELECT username, profile_image
     FROM users
     WHERE id = '$user'
 ")->fetch_assoc();
+
 $userProfileImage = $userInfo['profile_image'] ?? null;
 
-/* -------------------------
-   Send Message
--------------------------- */
+
+// ------------------------------------
+// SEND MESSAGE
+// ------------------------------------
+
 if (isset($_POST['send'])) {
+
     $message = trim($_POST['message']);
-    
+
     if ($message != "") {
+
+        // No artwork is associated with the message
         $stmt = $conn->prepare("
-            INSERT INTO messages (sender_id, receiver_id, artwork_id, message, is_read, created_at)
-            VALUES (?, ?, ?, ?, 0, NOW())
+            INSERT INTO messages
+            (sender_id, receiver_id, artwork_id, message, is_read, created_at)
+            VALUES (?, ?, NULL, ?, 0, NOW())
         ");
-        
-        $stmt->bind_param("iiis", $user, $artist, $artwork, $message);
+
+        $stmt->bind_param(
+            "iis",
+            $user,
+            $artist,
+            $message
+        );
+
         $stmt->execute();
-        
-        header("Location: chat.php?artist=$artist&art=$artwork");
+
+        header("Location: chat.php?artist=" . $artist);
         exit();
     }
 }
 
-/* -------------------------
-   Navigation Counts - Not used for badges anymore
--------------------------- */
+
+// ------------------------------------
+// GET PREVIOUS MESSAGES
+// ------------------------------------
+
+$stmt = $conn->prepare("
+    SELECT
+        id,
+        sender_id,
+        receiver_id,
+        message,
+        is_read,
+        created_at
+    FROM messages
+    WHERE
+        (sender_id = ? AND receiver_id = ?)
+        OR
+        (sender_id = ? AND receiver_id = ?)
+    ORDER BY created_at ASC
+");
+
+$stmt->bind_param(
+    "iiii",
+    $user,
+    $artist,
+    $artist,
+    $user
+);
+
+$stmt->execute();
+
+$messages = $stmt->get_result();
+
+
+// ------------------------------------
+// MARK RECEIVED MESSAGES AS READ
+// ------------------------------------
+
+$stmt = $conn->prepare("
+    UPDATE messages
+    SET is_read = 1
+    WHERE sender_id = ?
+    AND receiver_id = ?
+");
+
+$stmt->bind_param(
+    "ii",
+    $artist,
+    $user
+);
+
+$stmt->execute();
+
+
+// ------------------------------------
+// NAVIGATION COUNTS
+// ------------------------------------
+
 $cartCount = $conn->query("
     SELECT COUNT(*) total
     FROM cart
@@ -86,6 +165,7 @@ $messageCount = $conn->query("
     FROM messages
     WHERE receiver_id='$user' AND is_read = 0
 ")->fetch_assoc()['total'];
+
 ?>
 <!DOCTYPE html>
 <html>

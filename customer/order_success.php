@@ -8,21 +8,22 @@ if (!isset($_SESSION['id']) || $_SESSION['role'] != 'user') {
 
 include '../config/db.php';
 
-$order_id = isset($_GET['order_id']) ? $_GET['order_id'] : '';
-$payment_method = isset($_GET['payment']) ? $_GET['payment'] : 'cod';
-$ref_id = isset($_GET['ref']) ? $_GET['ref'] : '';
+$order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
+$payment_type = isset($_GET['payment']) ? $_GET['payment'] : 'cod';
+$success = isset($_GET['success']) ? $_GET['success'] : 0;
+
+if (!$order_id) {
+    header("Location: dashboard.php");
+    exit();
+}
 
 // Get order details
 $order = $conn->query("
-    SELECT 
-        o.*,
-        a.title as artwork_title,
-        u.username as artist_name
-    FROM orders o
-    JOIN artworks a ON o.artwork_id = a.id
-    JOIN users u ON o.artist_id = u.id
-    WHERE o.order_id = '$order_id' AND o.user_id = '{$_SESSION['id']}'
-    LIMIT 1
+    SELECT orders.*, artworks.title, users.username as artist_name
+    FROM orders
+    JOIN artworks ON orders.artwork_id = artworks.id
+    JOIN users ON orders.artist_id = users.id
+    WHERE orders.id = $order_id AND orders.user_id = '{$_SESSION['id']}'
 ")->fetch_assoc();
 
 if (!$order) {
@@ -30,198 +31,127 @@ if (!$order) {
     exit();
 }
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Success | Monet's Atelier</title>
+    <title>Order Success</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --monet-deep: #2c4b5a;
-            --monet-gold: #c9a87c;
-            --bg: #f5efe9;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Quicksand', sans-serif;
-        }
-
         body {
-            background: var(--bg);
+            font-family: 'Quicksand', sans-serif;
+            background: #f5efe9;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             min-height: 100vh;
+            margin: 0;
+            padding: 20px;
         }
-
         .container {
             background: white;
             padding: 50px;
             border-radius: 25px;
             box-shadow: 0 12px 28px rgba(44,75,90,.12);
             text-align: center;
-            max-width: 600px;
-            width: 90%;
+            max-width: 550px;
+            width: 100%;
         }
-
-        .container .icon {
+        .success-icon {
             font-size: 80px;
             color: #27ae60;
             margin-bottom: 20px;
         }
-
-        .container h1 {
-            color: var(--monet-deep);
-            margin-bottom: 10px;
-        }
-
-        .container .order-id {
-            color: #888;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .container .payment-method {
-            color: var(--monet-gold);
-            font-weight: 600;
+        .cod-icon {
+            font-size: 80px;
+            color: #f39c12;
             margin-bottom: 20px;
         }
-
-        .container .ref-id {
-            color: #888;
-            font-size: 13px;
-            margin-bottom: 15px;
+        h2 {
+            color: #2c4b5a;
+            margin-bottom: 10px;
         }
-
-        .container .details {
-            text-align: left;
-            background: #f8f5f0;
+        p {
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .order-details {
+            background: #f8f4f0;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 15px;
             margin: 20px 0;
+            text-align: left;
         }
-
-        .container .details .row {
+        .order-details .row {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #eee;
         }
-
-        .container .details .row:last-child {
+        .order-details .row:last-child {
             border-bottom: none;
         }
-
-        .container .details .label {
+        .order-details .label {
             color: #888;
         }
-
-        .container .details .value {
-            color: var(--monet-deep);
+        .order-details .value {
+            color: #2c4b5a;
             font-weight: 600;
         }
-
-        .container .btn-group {
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #2c4b5a;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: .3s;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #203845;
+            transform: translateY(-2px);
+        }
+        .btn-outline {
+            background: transparent;
+            color: #2c4b5a;
+            border: 2px solid #2c4b5a;
+        }
+        .btn-outline:hover {
+            background: #2c4b5a;
+            color: white;
+        }
+        .btn-group {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
             margin-top: 20px;
         }
-
-        .container .btn {
-            display: inline-block;
-            padding: 14px 30px;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: none;
-            transition: .3s;
-        }
-
-        .container .btn-primary {
-            background: var(--monet-deep);
-        }
-
-        .container .btn-primary:hover {
-            background: #203845;
-            transform: translateY(-2px);
-        }
-
-        .container .btn-secondary {
-            background: #7f8c8d;
-        }
-
-        .container .btn-secondary:hover {
-            background: #667273;
-            transform: translateY(-2px);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 30px 20px;
-            }
-        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <?php if ($payment_type == 'esewa' && $success): ?>
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Payment Successful!</h2>
+            <p>Your order has been confirmed and payment has been received.</p>
+        <?php elseif ($payment_type == 'cod'): ?>
+            <div class="cod-icon">
+                <i class="fas fa-truck"></i>
+            </div>
+            <h2>Order Placed Successfully!</h2>
+            <p>Your order has been placed. You will pay when you receive the artwork.</p>
+        <?php else: ?>
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Order Placed Successfully!</h2>
+            <p>Your order has been placed successfully.</p>
+        <?php endif; ?>
 
-<div class="container">
-    <div class="icon">
-        <i class="fas fa-check-circle"></i>
-    </div>
-    <h1>Order Placed Successfully!</h1>
-    <p class="order-id">Order ID: #<?php echo htmlspecialchars($order_id); ?></p>
-    <p class="payment-method">
-        <i class="fas fa-credit-card"></i>
-        Payment: <?php echo $payment_method == 'esewa' ? 'eSewa' : 'Cash on Delivery'; ?>
-    </p>
-    <?php if (!empty($ref_id)): ?>
-        <p class="ref-id">Reference ID: <?php echo htmlspecialchars($ref_id); ?></p>
-    <?php endif; ?>
-
-    <div class="details">
-        <div class="row">
-            <span class="label">Artwork</span>
-            <span class="value"><?php echo htmlspecialchars($order['artwork_title']); ?></span>
-        </div>
-        <div class="row">
-            <span class="label">Artist</span>
-            <span class="value"><?php echo htmlspecialchars($order['artist_name']); ?></span>
-        </div>
-        <div class="row">
-            <span class="label">Quantity</span>
-            <span class="value"><?php echo $order['quantity']; ?></span>
-        </div>
-        <div class="row">
-            <span class="label">Total</span>
-            <span class="value">Rs <?php echo number_format($order['total_price'], 2); ?></span>
-        </div>
-        <div class="row">
-            <span class="label">Status</span>
-            <span class="value" style="color:#f39c12;"><?php echo $order['status']; ?></span>
-        </div>
-    </div>
-
-    <div class="btn-group">
-        <a href="orders.php" class="btn btn-primary">
-            <i class="fas fa-box"></i> View My Orders
-        </a>
-        <a href="customer_dashboard.php" class="btn btn-secondary">
-            <i class="fas fa-home"></i> Continue Shopping
-        </a>
-    </div>
-</div>
-
-</body>
-</html>
+       

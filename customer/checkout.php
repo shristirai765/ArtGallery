@@ -59,45 +59,95 @@ if (isset($_POST['place_order'])) {
     if (empty($address)) $errors[] = "Address is required";
     
     if (empty($errors)) {
-        // Insert each item as a separate order
-        $stmt = $conn->prepare("
-            INSERT INTO orders (user_id, artwork_id, artist_id, quantity, total_price, status, order_date)
-            VALUES (?, ?, ?, ?, ?, ?, NOW())
-        ");
+        // Begin transaction
+        $conn->begin_transaction();
         
-        $status = 'Pending';
-        
-        foreach ($items as $item) {
-            $stmt->bind_param("iiidds", 
-                $user, 
-                $item['artwork_id'], 
-                $item['artist_id'], 
-                $item['quantity'], 
-                $total, 
-                $status
-            );
-            $stmt->execute();
-        }
-        
-        // Get the last inserted order ID
-        $lastOrderId = $conn->insert_id;
-        
-        // Clear cart
-        $conn->query("DELETE FROM cart WHERE user_id = '$user'");
-        
-        // If eSewa payment, redirect to eSewa
+        try {
+            // Insert each item as a separate order
+            $stmt = $conn->prepare("
+                INSERT INTO orders (
+                    user_id, 
+                    artwork_id, 
+                    artist_id, 
+                    quantity, 
+                    total_price, 
+                    status, 
+                    order_date, 
+                    payment_method, 
+                    address, 
+                    full_name, 
+                    email, 
+                    phone
+                ) VALUES (?, ?, ?, ?, ?, 'Pending', NOW(), ?, ?, ?, ?, ?)
+            ");
+            
+            if (!$stmt) {
+                throw new Exception("Database error: " . $conn->error);
+            }
+            
+            $orderIds = [];
+            
+            foreach ($items as $item) {
+                $subtotal = $item['price'] * $item['quantity'];
+                
+                $stmt->bind_param(
+                    "iiiddsssss", 
+                    $user,                          
+                    $item['artwork_id'],            
+                    $item['artist_id'],             
+                    $item['quantity'],              
+                    $subtotal,                      
+                    $payment_method,                
+                    $address,                       
+                    $full_name,                     
+                    $email,                         
+                    $phone                          
+                );
+                
+                if (!$stmt->execute()) {
+                    throw new Exception("Failed to insert order: " . $stmt->error);
+                }
+                
+                $orderIds[] = $conn->insert_id;
+            }
+            
+            $stmt->close();
+            
+            // Get the first order ID
+            $firstOrderId = $orderIds[0];
+            
+            // Clear cart only after successful order creation
+            $clearCart = $conn->query("DELETE FROM cart WHERE user_id = '$user'");
+            
+            if (!$clearCart) {
+                throw new Exception("Failed to clear cart: " . $conn->error);
+            }
+            
+            // Commit transaction
+            $conn->commit();
+            
+         // If eSewa payment, redirect to eSewa
         if ($payment_method == 'esewa') {
-            $_SESSION['esewa_order_id'] = $lastOrderId;
+            // Store order info in session for eSewa
+            $_SESSION['esewa_order_id'] = $firstOrderId;
             $_SESSION['esewa_amount'] = $total;
             
-            // Redirect to eSewa
-            header("Location: esewa_payment.php?order_id=" . urlencode($lastOrderId) . "&amount=" . $total);
+            // Redirect to eSewa payment page (in customer folder)
+            header("Location: esewa_payment.php?order_id=" . urlencode($firstOrderId) . "&amount=" . $total);
             exit();
         }
-        
-        // If COD, redirect to success
-        header("Location: order_success.php?order_id=" . urlencode($lastOrderId));
-        exit();
+            
+            // If COD, redirect to success
+            $_SESSION['order_success'] = "Order placed successfully!";
+            header("Location: order_success.php?order_id=" . urlencode($firstOrderId) . "&payment=cod");
+            exit();
+            
+        } catch (Exception $e) {
+            // Rollback transaction on error
+            $conn->rollback();
+            $errors[] = "Failed to place order: " . $e->getMessage();
+            error_log("Order Error: " . $e->getMessage());
+        }
     }
 }
 ?>
@@ -136,7 +186,6 @@ if (isset($_POST['place_order'])) {
             margin: 20px auto;
         }
 
-        /* Header */
         .header {
             background: white;
             padding: 20px 30px;
@@ -185,10 +234,6 @@ if (isset($_POST['place_order'])) {
             color: white;
         }
 
-        .badge {
-            display: none !important;
-        }
-
         .logout-btn {
             background: #c0392b;
             color: white !important;
@@ -204,7 +249,6 @@ if (isset($_POST['place_order'])) {
             gap: 25px;
         }
 
-        /* Form Section */
         .form-section {
             background: white;
             padding: 30px;
@@ -270,7 +314,6 @@ if (isset($_POST['place_order'])) {
             gap: 20px;
         }
 
-        /* Order Summary */
         .summary-section {
             background: white;
             padding: 30px;
@@ -371,28 +414,41 @@ if (isset($_POST['place_order'])) {
 
         .payment-methods label:hover {
             border-color: var(--monet-gold);
+            background: #faf8f6;
         }
 
         .payment-methods label input[type="radio"] {
             accent-color: var(--monet-deep);
             width: 18px;
             height: 18px;
+            flex-shrink: 0;
         }
 
         .payment-methods label .payment-icon {
             font-size: 24px;
             color: var(--monet-gold);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
         }
 
         .payment-methods label .payment-name {
             font-weight: 600;
             color: var(--monet-deep);
+            flex: 1;
         }
 
         .payment-methods label .payment-desc {
             font-size: 12px;
             color: #888;
             margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .payment-methods label:has(input[type="radio"]:checked) {
+            border-color: var(--monet-deep);
+            background: #f0f5f8;
+            box-shadow: 0 0 0 3px rgba(44, 75, 90, 0.1);
         }
 
         .place-order-btn {
@@ -406,6 +462,7 @@ if (isset($_POST['place_order'])) {
             font-weight: 700;
             cursor: pointer;
             transition: .3s;
+            margin-top: 10px;
         }
 
         .place-order-btn:hover {
@@ -432,7 +489,6 @@ if (isset($_POST['place_order'])) {
             padding: 3px 0;
         }
 
-        /* Responsive */
         @media (max-width: 992px) {
             .checkout-grid {
                 grid-template-columns: 1fr;
@@ -473,7 +529,6 @@ if (isset($_POST['place_order'])) {
 
 <div class="container">
 
-    <!-- Header -->
     <div class="header">
         <div class="logo">
             <i class="fas fa-palette"></i> Monet's Atelier
@@ -494,7 +549,6 @@ if (isset($_POST['place_order'])) {
 
     <div class="checkout-grid">
 
-        <!-- Checkout Form -->
         <div class="form-section">
             <h2><i class="fas fa-user"></i> Shipping Details</h2>
 
@@ -502,13 +556,13 @@ if (isset($_POST['place_order'])) {
                 <div class="error-message">
                     <ul>
                         <?php foreach ($errors as $error): ?>
-                            <li><i class="fas fa-exclamation-circle"></i> <?php echo $error; ?></li>
+                            <li><i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?></li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
             <?php endif; ?>
 
-            <form method="POST">
+            <form method="POST" id="checkoutForm">
                 <div class="form-row">
                     <div class="form-group">
                         <label><i class="fas fa-user"></i> Full Name</label>
@@ -546,10 +600,21 @@ if (isset($_POST['place_order'])) {
                     <label>
                         <input type="radio" name="payment_method" value="esewa">
                         <span class="payment-icon">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Esewa_logo.png/120px-Esewa_logo.png" 
-                                 alt="eSewa" style="height:24px;">
+                            <svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="100" cy="100" r="90" fill="#4CAF50"/>
+                                <text x="100" y="135" font-family="Arial, sans-serif" font-size="110" 
+                                      font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">
+                                    E
+                                </text>
+                                <text x="100" y="175" font-family="Arial, sans-serif" font-size="24" 
+                                      fill="white" text-anchor="middle" font-weight="bold" opacity="0.9">
+                                    sewa
+                                </text>
+                            </svg>
                         </span>
-                        <span class="payment-name">eSewa</span>
+                        <span class="payment-name">
+                            <span style="color:#4CAF50;font-weight:700;">e</span><span style="font-weight:600;">Sewa</span>
+                        </span>
                         <span class="payment-desc">Pay with eSewa</span>
                     </label>
                 </div>
@@ -560,7 +625,6 @@ if (isset($_POST['place_order'])) {
             </form>
         </div>
 
-        <!-- Order Summary -->
         <div class="summary-section">
             <h2><i class="fas fa-receipt"></i> Order Summary</h2>
 

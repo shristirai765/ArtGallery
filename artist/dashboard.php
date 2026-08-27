@@ -789,6 +789,9 @@ $artworks = $conn->query("
             <a href="add_artwork.php">
                 <i class="fas fa-plus-circle"></i> Add Artwork
             </a>
+            <a href="profile.php">
+                <i class="fas fa-user-circle"></i> Profile
+            </a>
             <a href="../logout.php" class="logout-btn">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </a>

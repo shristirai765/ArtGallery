@@ -383,7 +383,7 @@ $artworks = $conn->query("
             </a>
             <a href="cart.php">
                 <i class="fas fa-shopping-cart"></i>
-                My Cart
+                Cart
                 <!-- Badge removed -->
             </a>
             <a href="orders.php">

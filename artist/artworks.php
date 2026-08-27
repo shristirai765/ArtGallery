@@ -60,14 +60,13 @@ $stmt->bind_param("i", $loggedUser);
 $stmt->execute();
 $artworksResult = $stmt->get_result();
 
-// Navigation counts
+// Navigation counts - kept for reference but badges removed
 $orderCount = $conn->query("SELECT COUNT(*) total FROM orders WHERE artist_id = $loggedUser")->fetch_assoc()['total'];
 $messageCount = $conn->query("
     SELECT COUNT(*) total 
     FROM messages 
     WHERE receiver_id = $loggedUser AND is_read = 0
 ")->fetch_assoc()['total'];
-// We still need this for the badge on other pages but we'll hide it on this page
 $artworkCount = $conn->query("SELECT COUNT(*) total FROM artworks WHERE artist_id = $loggedUser")->fetch_assoc()['total'];
 ?>
 <!DOCTYPE html>
@@ -149,19 +148,9 @@ $artworkCount = $conn->query("SELECT COUNT(*) total FROM artworks WHERE artist_i
             color: white;
         }
         
+        /* Badges completely hidden */
         .badge {
-            background: #e74c3c;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            min-width: 18px;
-            text-align: center;
-        }
-        
-        .badge.hidden {
-            display: none;
+            display: none !important;
         }
         
         .logout {
@@ -434,26 +423,19 @@ $artworkCount = $conn->query("SELECT COUNT(*) total FROM artworks WHERE artist_i
                     <i class="fas fa-home"></i> Dashboard
                 </a>
                 <a href="orders.php">
-                    <i class="fas fa-box"></i> Orders 
-                    <span class="badge <?php echo $orderCount == 0 ? 'hidden' : ''; ?>">
-                        <?php echo $orderCount; ?>
-                    </span>
+                    <i class="fas fa-box"></i> Orders
                 </a>
                 <a href="messages.php">
-                    <i class="fas fa-envelope"></i> Messages 
-                    <span class="badge <?php echo $messageCount == 0 ? 'hidden' : ''; ?>">
-                        <?php echo $messageCount; ?>
-                    </span>
+                    <i class="fas fa-envelope"></i> Messages
                 </a>
                 <a href="artworks.php" class="active">
                     <i class="fas fa-paint-brush"></i> My Artworks
-                    <!-- Badge is hidden on this page -->
-                    <span class="badge hidden">
-                        <?php echo $artworkCount; ?>
-                    </span>
                 </a>
                 <a href="add_artwork.php">
                     <i class="fas fa-plus-circle"></i> Add Artwork
+                </a>
+                <a href="profile.php">
+                    <i class="fas fa-user-circle"></i> Profile
                 </a>
                 <a href="../logout.php" class="logout">
                     <i class="fas fa-sign-out-alt"></i> Logout

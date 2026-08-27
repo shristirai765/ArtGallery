@@ -8,66 +8,161 @@ if (!isset($_SESSION['id']) || $_SESSION['role'] != 'artist') {
 
 include '../config/db.php';
 
-$id = $_SESSION['id'];
+$user = $_SESSION['id'];
+$message = '';
+$error = '';
 
 // Get user data
-$user = $conn->query("
-    SELECT *
+$userData = $conn->query("
+    SELECT id, username, email, password, role, bio, profile_image, last_activity
     FROM users
-    WHERE id='$id'
+    WHERE id = '$user'
 ")->fetch_assoc();
 
-if (!$user) {
+if (!$userData) {
     header("Location: ../logout.php");
     exit();
 }
 
-// Get statistics
-$totalArtworks = $conn->query("
-    SELECT COUNT(*) AS total
-    FROM artworks
-    WHERE artist_id='$id'
-")->fetch_assoc()['total'];
-
-$totalViews = $conn->query("
-    SELECT SUM(views) AS total
-    FROM artworks
-    WHERE artist_id='$id'
-")->fetch_assoc()['total'] ?? 0;
-
-$totalSales = $conn->query("
-    SELECT COUNT(*) AS total
-    FROM orders
-    WHERE artist_id='$id' AND status = 'Completed'
-")->fetch_assoc()['total'] ?? 0;
-
-$totalRevenue = $conn->query("
-    SELECT SUM(total_price) AS total
-    FROM orders
-    WHERE artist_id='$id' AND status = 'Completed'
-")->fetch_assoc()['total'] ?? 0;
-
-// If total_price doesn't exist, try using artwork price
-if ($totalRevenue == 0) {
-    $revenueResult = $conn->query("
-        SELECT SUM(a.price) AS total
-        FROM orders o
-        JOIN artworks a ON o.artwork_id = a.id
-        WHERE o.artist_id='$id' AND o.status = 'Completed'
+// Handle profile update
+if (isset($_POST['update_profile'])) {
+    $bio = trim($_POST['bio']);
+    $email = trim($_POST['email']);
+    
+    $errors = [];
+    
+    // Validate email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Please enter a valid email address.";
+    }
+    
+    // Check if email already exists for another user
+    $emailCheck = $conn->query("
+        SELECT id FROM users 
+        WHERE email = '$email' AND id != '$user'
     ");
-    if ($revenueResult && $revenueResult->num_rows > 0) {
-        $totalRevenue = $revenueResult->fetch_assoc()['total'] ?? 0;
+    if ($emailCheck->num_rows > 0) {
+        $errors[] = "Email already in use by another account.";
+    }
+    
+    if (empty($errors)) {
+        $updateStmt = $conn->prepare("
+            UPDATE users 
+            SET bio = ?, email = ?
+            WHERE id = ?
+        ");
+        $updateStmt->bind_param("ssi", $bio, $email, $user);
+        
+        if ($updateStmt->execute()) {
+            $message = "Profile updated successfully!";
+            // Refresh user data
+            $userData = $conn->query("
+                SELECT id, username, email, password, role, bio, profile_image, last_activity
+                FROM users
+                WHERE id = '$user'
+            ")->fetch_assoc();
+        } else {
+            $error = "Failed to update profile. Please try again.";
+        }
+    } else {
+        $error = implode("<br>", $errors);
+    }
+}
+
+// Handle password change
+if (isset($_POST['change_password'])) {
+    $current_password = $_POST['current_password'];
+    $new_password = $_POST['new_password'];
+    $confirm_password = $_POST['confirm_password'];
+    
+    $errors = [];
+    
+    // Verify current password
+    if (!password_verify($current_password, $userData['password'])) {
+        $errors[] = "Current password is incorrect.";
+    }
+    
+    if (strlen($new_password) < 6) {
+        $errors[] = "New password must be at least 6 characters long.";
+    }
+    
+    if ($new_password !== $confirm_password) {
+        $errors[] = "Passwords do not match.";
+    }
+    
+    if (empty($errors)) {
+        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        $updatePass = $conn->prepare("
+            UPDATE users SET password = ? WHERE id = ?
+        ");
+        $updatePass->bind_param("si", $hashed_password, $user);
+        
+        if ($updatePass->execute()) {
+            $message = "Password changed successfully!";
+            // Refresh user data
+            $userData = $conn->query("
+                SELECT id, username, email, password, role, bio, profile_image, last_activity
+                FROM users
+                WHERE id = '$user'
+            ")->fetch_assoc();
+        } else {
+            $error = "Failed to change password. Please try again.";
+        }
+    } else {
+        $error = implode("<br>", $errors);
+    }
+}
+
+// Handle profile image upload
+if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    $maxSize = 2 * 1024 * 1024; // 2MB
+    
+    if (!in_array($_FILES['profile_image']['type'], $allowedTypes)) {
+        $error = "Only JPEG, PNG, GIF, and WEBP images are allowed.";
+    } elseif ($_FILES['profile_image']['size'] > $maxSize) {
+        $error = "Image size must be less than 2MB.";
+    } else {
+        $extension = pathinfo($_FILES['profile_image']['name'], PATHINFO_EXTENSION);
+        $filename = 'profile_' . $user . '_' . time() . '.' . $extension;
+        $targetPath = "../uploads/profile/" . $filename;
+        
+        // Create directory if it doesn't exist
+        if (!is_dir("../uploads/profile")) {
+            mkdir("../uploads/profile", 0777, true);
+        }
+        
+        // Delete old profile image if exists
+        if (!empty($userData['profile_image']) && file_exists("../uploads/profile/" . $userData['profile_image'])) {
+            unlink("../uploads/profile/" . $userData['profile_image']);
+        }
+        
+        if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $targetPath)) {
+            $updateImg = $conn->prepare("
+                UPDATE users SET profile_image = ? WHERE id = ?
+            ");
+            $updateImg->bind_param("si", $filename, $user);
+            
+            if ($updateImg->execute()) {
+                $message = "Profile picture updated successfully!";
+                $userData['profile_image'] = $filename;
+            } else {
+                $error = "Failed to update profile picture.";
+            }
+        } else {
+            $error = "Failed to upload image.";
+        }
     }
 }
 
 // Navigation counts
-$orderCount = $conn->query("SELECT COUNT(*) total FROM orders WHERE artist_id = $id")->fetch_assoc()['total'] ?? 0;
+$orderCount = $conn->query("SELECT COUNT(*) total FROM orders WHERE artist_id = $user")->fetch_assoc()['total'] ?? 0;
 $messageCount = $conn->query("
     SELECT COUNT(*) total 
     FROM messages 
-    WHERE receiver_id = $id AND is_read = 0
+    WHERE receiver_id = $user AND is_read = 0
 ")->fetch_assoc()['total'] ?? 0;
-$artworkCount = $totalArtworks;
+$artworkCount = $conn->query("SELECT COUNT(*) total FROM artworks WHERE artist_id = $user")->fetch_assoc()['total'] ?? 0;
 ?>
 
 <!DOCTYPE html>
@@ -75,7 +170,7 @@ $artworkCount = $totalArtworks;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Artist Profile | ArtHub</title>
+    <title>Artist Profile | Monet's Atelier</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -96,31 +191,30 @@ $artworkCount = $totalArtworks;
 
         body {
             background: var(--bg);
+            min-height: 100vh;
         }
 
         .container {
             width: 90%;
             max-width: 1200px;
-            margin: auto;
+            margin: 20px auto;
         }
 
-        /* Header Navigation */
-        .header-nav {
-            margin-top: 20px;
+        /* Header */
+        .header {
             background: white;
-            padding: 15px 25px;
-            border-radius: 20px;
+            padding: 20px 30px;
+            border-radius: 25px;
             box-shadow: var(--shadow);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
             margin-bottom: 30px;
         }
 
         .logo {
-            font-size: 24px;
+            font-size: 1.8rem;
             font-weight: 700;
             color: var(--monet-deep);
         }
@@ -131,22 +225,18 @@ $artworkCount = $totalArtworks;
 
         .nav {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
             flex-wrap: wrap;
         }
 
         .nav a {
             text-decoration: none;
-            padding: 10px 16px;
-            border-radius: 12px;
             color: var(--monet-deep);
             font-weight: 600;
+            padding: 10px 16px;
+            border-radius: 10px;
             transition: .3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 14px;
         }
 
         .nav a:hover {
@@ -172,82 +262,60 @@ $artworkCount = $totalArtworks;
             background: #a93226 !important;
         }
 
-        /* Banner */
-        .banner {
-            height: 180px;
-            border-radius: 30px;
-            background: linear-gradient(135deg, #e8ddd2, #d6c8bb);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .banner::after {
-            content: '🎨';
-            position: absolute;
-            right: 40px;
-            bottom: 20px;
-            font-size: 60px;
-            opacity: 0.3;
+        /* Profile Layout */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 25px;
         }
 
         /* Profile Card */
         .profile-card {
             background: white;
-            margin-top: -60px;
-            border-radius: 30px;
-            padding: 40px;
+            border-radius: 20px;
+            padding: 30px;
             box-shadow: var(--shadow);
-            position: relative;
-            z-index: 1;
+            text-align: center;
+            align-self: start;
         }
 
-        .profile-top {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-            align-items: center;
-        }
-
-        .avatar {
+        .profile-image {
             width: 150px;
             height: 150px;
             border-radius: 50%;
-            overflow: hidden;
-            border: 6px solid white;
-            box-shadow: var(--shadow);
-            flex-shrink: 0;
+            object-fit: cover;
+            border: 4px solid var(--monet-gold);
+            margin: 0 auto 15px;
             background: #f0ece8;
         }
 
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .avatar-placeholder {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--monet-lily), var(--monet-deep));
+        .profile-image-placeholder {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #e8ddd2, #d6c8bb);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-size: 4rem;
+            margin: 0 auto 15px;
+            border: 4px solid var(--monet-gold);
+            font-size: 60px;
+            color: var(--monet-gold);
         }
 
-        .info {
-            flex: 1;
-        }
-
-        .info h1 {
+        .profile-name {
             color: var(--monet-deep);
-            margin-bottom: 8px;
-            font-size: 28px;
+            font-size: 22px;
+            margin-bottom: 5px;
         }
 
-        .info .role-badge {
+        .profile-username {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .profile-role {
             display: inline-block;
             background: var(--monet-gold);
             color: white;
@@ -258,148 +326,188 @@ $artworkCount = $totalArtworks;
             margin-bottom: 10px;
         }
 
-        .info p {
-            color: #6c7c84;
-            margin-bottom: 6px;
-            font-size: 15px;
+        .profile-status {
+            color: #888;
+            font-size: 13px;
         }
 
-        .info p i {
+        .profile-status i {
             color: var(--monet-gold);
-            width: 20px;
         }
 
-        .info .status {
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .info .status .online {
+        .profile-status .online {
             color: #27ae60;
         }
 
-        .info .status .offline {
+        .profile-status .offline {
             color: #999;
         }
 
-        .buttons {
+        .upload-btn {
+            display: inline-block;
             margin-top: 15px;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
+            padding: 8px 16px;
+            background: var(--monet-deep);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: .3s;
+            border: none;
         }
 
-        .btn {
-            text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 12px;
+        .upload-btn:hover {
+            background: #203845;
+        }
+
+        .upload-btn input[type="file"] {
+            display: none;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .form-card h2 {
+            color: var(--monet-deep);
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .form-card h2 i {
+            color: var(--monet-gold);
+            margin-right: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
             font-weight: 600;
+            color: var(--monet-deep);
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .form-group label i {
+            color: var(--monet-gold);
+            margin-right: 5px;
+            width: 18px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: .3s;
+            font-family: 'Quicksand', sans-serif;
+            background: #fafafa;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--monet-lily);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(127, 163, 168, 0.1);
+        }
+
+        .form-group input:disabled {
+            background: #f0f0f0;
+            cursor: not-allowed;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .form-group .hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .btn-submit {
+            background: var(--monet-deep);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
             transition: .3s;
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
 
-        .btn:hover {
+        .btn-submit:hover {
+            background: #203845;
             transform: translateY(-2px);
-        }
-
-        .edit-btn {
-            background: var(--monet-deep);
-            color: white;
-        }
-
-        .edit-btn:hover {
-            background: #1f3945;
             box-shadow: 0 5px 15px rgba(44, 75, 90, 0.3);
         }
 
-        .dashboard-btn {
-            background: #7f8c8d;
-            color: white;
-        }
-
-        .dashboard-btn:hover {
-            background: #667273;
-        }
-
-        /* Stats */
-        .stats {
-            margin-top: 30px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-        }
-
-        .stat {
-            background: #f8f5f0;
-            padding: 25px;
-            text-align: center;
-            border-radius: 20px;
-            transition: .3s;
-        }
-
-        .stat:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow);
-        }
-
-        .stat i {
-            font-size: 2rem;
+        .btn-submit i {
             color: var(--monet-gold);
-            margin-bottom: 8px;
         }
 
-        .stat .number {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--monet-deep);
-            display: block;
+        .alert {
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .stat .label {
-            color: #888;
-            font-size: 14px;
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
         }
 
-        .stat.revenue .number {
-            color: #2ecc71;
+        .alert-success i {
+            font-size: 18px;
         }
 
-        /* Bio Section */
-        .bio-section {
-            margin-top: 30px;
-            background: white;
-            padding: 30px;
-            border-radius: 25px;
-            box-shadow: var(--shadow);
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
         }
 
-        .bio-section h2 {
-            color: var(--monet-deep);
-            margin-bottom: 15px;
-            font-size: 20px;
+        .alert-error i {
+            font-size: 18px;
         }
 
-        .bio-section h2 i {
-            color: var(--monet-gold);
-            margin-right: 8px;
-        }
-
-        .bio-section p {
-            color: #5f6f77;
-            line-height: 1.8;
-            font-size: 15px;
-        }
-
-        .bio-section .empty-bio {
-            color: #aaa;
-            font-style: italic;
+        .divider {
+            border: none;
+            border-top: 2px solid #f0f0f0;
+            margin: 25px 0;
         }
 
         /* Responsive */
+        @media (max-width: 992px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
-            .header-nav {
+            .header {
                 flex-direction: column;
                 gap: 15px;
                 align-items: stretch;
@@ -414,47 +522,14 @@ $artworkCount = $totalArtworks;
                 padding: 8px 12px;
             }
 
-            .profile-top {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .buttons {
-                justify-content: center;
-            }
-
-            .profile-card {
-                padding: 25px;
-                margin-top: -40px;
-            }
-
-            .avatar {
-                width: 120px;
-                height: 120px;
-            }
-
-            .stats {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
             .container {
                 width: 95%;
             }
 
-            .banner {
+            .profile-image,
+            .profile-image-placeholder {
+                width: 120px;
                 height: 120px;
-            }
-
-            .banner::after {
-                font-size: 40px;
-                right: 20px;
-                bottom: 10px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .stats {
-                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -463,10 +538,11 @@ $artworkCount = $totalArtworks;
 
 <div class="container">
 
-    <!-- Navigation -->
-    <div class="header-nav">
+    <!-- Header -->
+    <div class="header">
         <div class="logo">
-            <i class="fas fa-palette"></i> ArtHub Artist
+            <i class="fas fa-palette"></i>
+            Monet's Atelier
         </div>
         <div class="nav">
             <a href="dashboard.php">
@@ -476,7 +552,7 @@ $artworkCount = $totalArtworks;
                 <i class="fas fa-box"></i> Orders
             </a>
             <a href="messages.php">
-                <i class="fas fa-envelope"></i> Messages
+                <i class="fas fa-comments"></i> Messages
             </a>
             <a href="artworks.php">
                 <i class="fas fa-paint-brush"></i> My Artworks
@@ -493,111 +569,133 @@ $artworkCount = $totalArtworks;
         </div>
     </div>
 
-    <!-- Banner -->
-    <div class="banner"></div>
-
-    <!-- Profile Card -->
-    <div class="profile-card">
-
-        <div class="profile-top">
-
-            <div class="avatar">
-                <?php if (!empty($user['profile_image']) && file_exists("../uploads/profile/" . $user['profile_image'])): ?>
-                    <img src="../uploads/profile/<?php echo htmlspecialchars($user['profile_image']); ?>" 
-                         alt="<?php echo htmlspecialchars($user['username']); ?>">
-                <?php elseif (!empty($user['profile_image']) && file_exists("../uploads/" . $user['profile_image'])): ?>
-                    <img src="../uploads/<?php echo htmlspecialchars($user['profile_image']); ?>" 
-                         alt="<?php echo htmlspecialchars($user['username']); ?>">
-                <?php else: ?>
-                    <div class="avatar-placeholder">
-                        <i class="fas fa-user"></i>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="info">
-                <h1><?php echo htmlspecialchars($user['username']); ?></h1>
-                <span class="role-badge">Artist</span>
-
-                <p>
-                    <i class="fas fa-envelope"></i>
-                    <?php echo htmlspecialchars($user['email']); ?>
-                </p>
-
-                <p>
-                    <i class="fas fa-paint-brush"></i>
-                    Artist Account
-                </p>
-
-                <?php
-                // Check if user is online
-                $lastActivity = strtotime($user['last_activity'] ?? '');
-                $currentTime = time();
-                $isOnline = ($lastActivity && ($currentTime - $lastActivity) < (5 * 60));
-                ?>
-                <p class="status">
-                    <i class="fas fa-circle <?php echo $isOnline ? 'online' : 'offline'; ?>"></i>
-                    <?php echo $isOnline ? 'Online' : 'Offline'; ?>
-                </p>
-
-                <div class="buttons">
-                    <a href="edit_profile.php" class="btn edit-btn">
-                        <i class="fas fa-user-edit"></i> Edit Profile
-                    </a>
-                    <a href="dashboard.php" class="btn dashboard-btn">
-                        <i class="fas fa-arrow-left"></i> Dashboard
-                    </a>
-                </div>
-            </div>
-
+    <!-- Messages -->
+    <?php if (!empty($message)): ?>
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> <?php echo $message; ?>
         </div>
+    <?php endif; ?>
 
-        <!-- Stats -->
-        <div class="stats">
-            <div class="stat">
-                <i class="fas fa-image"></i>
-                <span class="number"><?php echo $totalArtworks; ?></span>
-                <span class="label">Artworks</span>
-            </div>
-
-            <div class="stat">
-                <i class="fas fa-eye"></i>
-                <span class="number"><?php echo number_format($totalViews); ?></span>
-                <span class="label">Total Views</span>
-            </div>
-
-            <div class="stat">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="number"><?php echo $totalSales; ?></span>
-                <span class="label">Sales</span>
-            </div>
-
-            <div class="stat revenue">
-                <i class="fas fa-rupee-sign"></i>
-                <span class="number">Rs <?php echo number_format($totalRevenue ?? 0, 0); ?></span>
-                <span class="label">Revenue</span>
-            </div>
+    <?php if (!empty($error)): ?>
+        <div class="alert alert-error">
+            <i class="fas fa-exclamation-circle"></i> <?php echo $error; ?>
         </div>
+    <?php endif; ?>
 
-    </div>
+    <!-- Profile Grid -->
+    <div class="profile-grid">
 
-    <!-- Bio Section -->
-    <div class="bio-section">
-        <h2>
-            <i class="fas fa-feather-alt"></i>
-            About the Artist
-        </h2>
-
-        <p>
-            <?php if (!empty($user['bio'])): ?>
-                <?php echo nl2br(htmlspecialchars($user['bio'])); ?>
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <?php if (!empty($userData['profile_image']) && file_exists("../uploads/profile/" . $userData['profile_image'])): ?>
+                <img class="profile-image" src="../uploads/profile/<?php echo htmlspecialchars($userData['profile_image']); ?>" 
+                     alt="<?php echo htmlspecialchars($userData['username']); ?>">
             <?php else: ?>
-                <span class="empty-bio">No artist biography has been added yet.</span>
+                <div class="profile-image-placeholder">
+                    <i class="fas fa-user"></i>
+                </div>
             <?php endif; ?>
-        </p>
+
+            <h2 class="profile-name"><?php echo htmlspecialchars($userData['username']); ?></h2>
+            <p class="profile-username">@<?php echo htmlspecialchars($userData['username']); ?></p>
+            <span class="profile-role"><?php echo ucfirst($userData['role'] ?? 'Artist'); ?></span>
+
+            <?php
+            // Check if user is online (within last 5 minutes)
+            $lastActivity = strtotime($userData['last_activity'] ?? '');
+            $currentTime = time();
+            $isOnline = ($lastActivity && ($currentTime - $lastActivity) < (5 * 60));
+            ?>
+            <p class="profile-status">
+                <i class="fas fa-circle <?php echo $isOnline ? 'online' : 'offline'; ?>"></i>
+                <?php echo $isOnline ? 'Online' : 'Offline'; ?>
+            </p>
+
+            <form method="POST" enctype="multipart/form-data">
+                <label class="upload-btn">
+                    <i class="fas fa-camera"></i> Change Photo
+                    <input type="file" name="profile_image" accept="image/*" onchange="this.form.submit()">
+                </label>
+            </form>
+        </div>
+
+        <!-- Edit Profile Form -->
+        <div class="form-card">
+            <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
+
+            <form method="POST">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Username</label>
+                    <input type="text" value="<?php echo htmlspecialchars($userData['username']); ?>" disabled>
+                    <span class="hint">Username cannot be changed</span>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" name="email" 
+                           value="<?php echo htmlspecialchars($userData['email']); ?>" required>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-info-circle"></i> Bio</label>
+                    <textarea name="bio" placeholder="Tell us about yourself as an artist..."><?php echo htmlspecialchars($userData['bio'] ?? ''); ?></textarea>
+                    <span class="hint">Share your artistic journey and inspirations</span>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-user-tag"></i> Role</label>
+                    <input type="text" value="<?php echo ucfirst($userData['role'] ?? 'Artist'); ?>" disabled>
+                    <span class="hint">Your account type cannot be changed</span>
+                </div>
+
+                <button type="submit" name="update_profile" class="btn-submit">
+                    <i class="fas fa-save"></i> Update Profile
+                </button>
+            </form>
+
+            <hr class="divider">
+
+            <!-- Change Password -->
+            <h2><i class="fas fa-key"></i> Change Password</h2>
+
+            <form method="POST">
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Current Password</label>
+                    <input type="password" name="current_password" placeholder="Enter current password" required>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> New Password</label>
+                    <input type="password" name="new_password" placeholder="Enter new password (min 6 characters)" required>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Confirm Password</label>
+                    <input type="password" name="confirm_password" placeholder="Confirm new password" required>
+                </div>
+
+                <button type="submit" name="change_password" class="btn-submit">
+                    <i class="fas fa-key"></i> Change Password
+                </button>
+            </form>
+        </div>
     </div>
 
 </div>
+
+<script>
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.style.transition = 'opacity 0.5s';
+            alert.style.opacity = '0';
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 500);
+        });
+    }, 5000);
+</script>
 
 </body>
 </html>

@@ -105,7 +105,7 @@ if (isset($_POST['submit'])) {
     }
 }
 
-// Get navigation counts for artist
+// Get navigation counts for artist - kept for reference but badges removed
 $loggedUser = (int)$_SESSION['id'];
 $orderCount = $conn->query("SELECT COUNT(*) total FROM orders WHERE artist_id = $loggedUser")->fetch_assoc()['total'];
 $messageCount = $conn->query("
@@ -121,7 +121,7 @@ $artworkCount = $conn->query("SELECT COUNT(*) total FROM artworks WHERE artist_i
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Artwork | ArtHub Artist</title>
+    <title>Add Artwork | Monet's Atelier</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -204,19 +204,9 @@ $artworkCount = $conn->query("SELECT COUNT(*) total FROM artworks WHERE artist_i
             color: white;
         }
 
+        /* Badges completely hidden */
         .badge {
-            background: #e74c3c;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: bold;
-            min-width: 18px;
-            text-align: center;
-        }
-
-        .badge.hidden {
-            display: none;
+            display: none !important;
         }
 
         .logout {
@@ -501,22 +491,18 @@ $artworkCount = $conn->query("SELECT COUNT(*) total FROM artworks WHERE artist_i
             </a>
             <a href="orders.php">
                 <i class="fas fa-box"></i> Orders
-                <span class="badge <?php echo $orderCount == 0 ? 'hidden' : ''; ?>">
-                    <?php echo $orderCount; ?>
-                </span>
             </a>
             <a href="messages.php">
                 <i class="fas fa-envelope"></i> Messages
-                <span class="badge <?php echo $messageCount == 0 ? 'hidden' : ''; ?>">
-                    <?php echo $messageCount; ?>
-                </span>
             </a>
             <a href="artworks.php">
                 <i class="fas fa-paint-brush"></i> My Artworks
-                <!-- Badge removed from here on add artwork page -->
             </a>
             <a href="add_artwork.php" class="active">
                 <i class="fas fa-plus-circle"></i> Add Artwork
+            </a>
+            <a href="profile.php">
+                <i class="fas fa-user-circle"></i> Profile
             </a>
             <a href="../logout.php" class="logout">
                 <i class="fas fa-sign-out-alt"></i> Logout
