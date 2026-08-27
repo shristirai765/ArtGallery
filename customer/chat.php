@@ -9,7 +9,7 @@ if (!isset($_SESSION['id']) || $_SESSION['role'] != 'user') {
 
 include "../config/db.php";
 
-$user = $_SESSION['id'];
+$user = (int)$_SESSION['id'];
 
 if (!isset($_GET['artist'])) {
     die("Artist not found.");
@@ -18,15 +18,20 @@ if (!isset($_GET['artist'])) {
 $artist = (int)$_GET['artist'];
 
 
-// ------------------------------------
-// GET ARTIST INFORMATION
-// ------------------------------------
+// ================================
+// GET ARTIST INFO
+// ================================
 
-$artistInfo = $conn->query("
+$stmt = $conn->prepare("
     SELECT username, profile_image, last_activity
     FROM users
-    WHERE id = '$artist'
-")->fetch_assoc();
+    WHERE id = ?
+");
+
+$stmt->bind_param("i", $artist);
+$stmt->execute();
+
+$artistInfo = $stmt->get_result()->fetch_assoc();
 
 if (!$artistInfo) {
     die("Artist not found.");
@@ -36,40 +41,46 @@ $artistName = $artistInfo['username'];
 $artistProfileImage = $artistInfo['profile_image'] ?? null;
 
 
-// ------------------------------------
-// CHECK ARTIST ONLINE STATUS
-// ------------------------------------
+// ================================
+// ARTIST ONLINE STATUS
+// ================================
 
 $lastActivity = strtotime($artistInfo['last_activity'] ?? '');
-$currentTime = time();
 
-$isOnline = ($lastActivity && ($currentTime - $lastActivity) < (5 * 60));
+$isOnline = (
+    $lastActivity &&
+    (time() - $lastActivity) < (5 * 60)
+);
 
 
-// ------------------------------------
-// GET LOGGED-IN USER INFORMATION
-// ------------------------------------
+// ================================
+// GET CUSTOMER INFO
+// ================================
 
-$userInfo = $conn->query("
+$stmt = $conn->prepare("
     SELECT username, profile_image
     FROM users
-    WHERE id = '$user'
-")->fetch_assoc();
+    WHERE id = ?
+");
+
+$stmt->bind_param("i", $user);
+$stmt->execute();
+
+$userInfo = $stmt->get_result()->fetch_assoc();
 
 $userProfileImage = $userInfo['profile_image'] ?? null;
 
 
-// ------------------------------------
+// ================================
 // SEND MESSAGE
-// ------------------------------------
+// ================================
 
 if (isset($_POST['send'])) {
 
-    $message = trim($_POST['message']);
+    $message = trim($_POST['message'] ?? '');
 
-    if ($message != "") {
+    if ($message !== '') {
 
-        // No artwork is associated with the message
         $stmt = $conn->prepare("
             INSERT INTO messages
             (sender_id, receiver_id, artwork_id, message, is_read, created_at)
@@ -83,7 +94,9 @@ if (isset($_POST['send'])) {
             $message
         );
 
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            die("Message could not be sent: " . $stmt->error);
+        }
 
         header("Location: chat.php?artist=" . $artist);
         exit();
@@ -91,9 +104,9 @@ if (isset($_POST['send'])) {
 }
 
 
-// ------------------------------------
+// ================================
 // GET PREVIOUS MESSAGES
-// ------------------------------------
+// ================================
 
 $stmt = $conn->prepare("
     SELECT
@@ -108,7 +121,7 @@ $stmt = $conn->prepare("
         (sender_id = ? AND receiver_id = ?)
         OR
         (sender_id = ? AND receiver_id = ?)
-    ORDER BY created_at ASC
+    ORDER BY created_at ASC, id ASC
 ");
 
 $stmt->bind_param(
@@ -124,9 +137,9 @@ $stmt->execute();
 $messages = $stmt->get_result();
 
 
-// ------------------------------------
-// MARK RECEIVED MESSAGES AS READ
-// ------------------------------------
+// ================================
+// MARK MESSAGES AS READ
+// ================================
 
 $stmt = $conn->prepare("
     UPDATE messages
@@ -135,35 +148,31 @@ $stmt = $conn->prepare("
     AND receiver_id = ?
 ");
 
-$stmt->bind_param(
-    "ii",
-    $artist,
-    $user
-);
-
+$stmt->bind_param("ii", $artist, $user);
 $stmt->execute();
 
 
-// ------------------------------------
-// NAVIGATION COUNTS
-// ------------------------------------
+// ================================
+// COUNTS
+// ================================
 
 $cartCount = $conn->query("
-    SELECT COUNT(*) total
+    SELECT COUNT(*) AS total
     FROM cart
-    WHERE user_id='$user'
+    WHERE user_id = '$user'
 ")->fetch_assoc()['total'];
 
 $orderCount = $conn->query("
-    SELECT COUNT(*) total
+    SELECT COUNT(*) AS total
     FROM orders
-    WHERE user_id='$user'
+    WHERE user_id = '$user'
 ")->fetch_assoc()['total'];
 
 $messageCount = $conn->query("
-    SELECT COUNT(*) total
+    SELECT COUNT(*) AS total
     FROM messages
-    WHERE receiver_id='$user' AND is_read = 0
+    WHERE receiver_id = '$user'
+    AND is_read = 0
 ")->fetch_assoc()['total'];
 
 ?>
@@ -716,7 +725,7 @@ $messageCount = $conn->query("
             const box = document.getElementById("chatMessages");
             const isNearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
             
-            fetch("load_messages.php?artist=<?php echo $artist; ?>&art=<?php echo $artwork; ?>")
+                fetch("load_messages.php?artist=<?php echo $artist; ?>")
                 .then(res => res.text())
                 .then(data => {
                     if (data !== lastMessages) {
